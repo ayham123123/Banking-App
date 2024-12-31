@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Application</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        main {
+            width: 90%;
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #444;
+        }
+        section {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 15px;
+        }
+        section:last-child {
+            border-bottom: none;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+        input:focus, button:focus {
+            outline: none;
+            border-color: #6a11cb;
+        }
+        button {
+            background: #2575fc;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #6a11cb;
+        }
+        .message {
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<main>
+    <h1>Bank Application</h1>
+
+    <section>
+        <h2>Create a New Account</h2>
+        <label for="accountHolder">Account Holder Name</label>
+        <input type="text" id="accountHolder" placeholder="Enter name">
+        <label for="initialDeposit">Initial Deposit</label>
+        <input type="number" id="initialDeposit" placeholder="Enter initial deposit">
+        <button onclick="createAccount()">Create Account</button>
+        <div class="message" id="createAccountResponseMessage"></div>
+    </section>
+
+    <section>
+        <h2>Deposit to Account</h2>
+        <label for="depositAccountId">Account ID</label>
+        <input type="text" id="depositAccountId" placeholder="Enter account ID">
+        <label for="depositAmountInput">Deposit Amount</label>
+        <input type="number" id="depositAmountInput" placeholder="Enter amount">
+        <button onclick="depositToAccount()">Deposit</button>
+        <div class="message" id="depositResponseMessage"></div>
+    </section>
+
+    <section>
+        <h2>Withdraw from Account</h2>
+        <label for="withdrawAccountId">Account ID</label>
+        <input type="text" id="withdrawAccountId" placeholder="Enter account ID">
+        <label for="withdrawAmountInput">Withdrawal Amount</label>
+        <input type="number" id="withdrawAmountInput" placeholder="Enter amount">
+        <button onclick="withdrawFromAccount()">Withdraw</button>
+        <div class="message" id="withdrawResponseMessage"></div>
+    </section>
+
+    <section>
+        <h2>Check Balance</h2>
+        <label for="balanceAccountId">Account ID</label>
+        <input type="text" id="balanceAccountId" placeholder="Enter account ID">
+        <button onclick="checkBalance()">Check Balance</button>
+        <div class="message" id="balanceResponseMessage"></div>
+    </section>
+
+    
+    <section>
+        <h2>Delete Account</h2>
+        <label for="deleteAccountId">Account ID</label>
+        <input type="text" id="deleteAccountId" placeholder="Enter account ID">
+        <button onclick="deleteAccount()">Delete Account</button>
+        <div class="message" id="deleteResponseMessage"></div>
+    </section>
+</main>
+
+<script>
+    // Create Account
+    async function createAccount() {
+        const name = document.getElementById('accountHolder').value;
+        const initialDeposit = parseFloat(document.getElementById('initialDeposit').value);
+
+        if (!name || !initialDeposit || initialDeposit <= 0) {
+            document.getElementById('createAccountResponseMessage').textContent = 'Please provide valid inputs.';
+            document.getElementById('createAccountResponseMessage').style.color = 'red';
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:8080/api/accounts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name, balance: initialDeposit })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById('createAccountResponseMessage').textContent = `Account created successfully. Account ID: ${data.id}`;
+                document.getElementById('createAccountResponseMessage').style.color = 'green';
+            } else {
+                const error = await response.text();
+                document.getElementById('createAccountResponseMessage').textContent = `Error: ${error}`;
+                document.getElementById('createAccountResponseMessage').style.color = 'red';
+            }
+        } catch (error) {
+            document.getElementById('createAccountResponseMessage').textContent = `Error: ${error.message}`;
+            document.getElementById('createAccountResponseMessage').style.color = 'red';
+        }
+    }
+
+    // Deposit to Account
+    async function depositToAccount() {
+        const accountId = document.getElementById('depositAccountId').value;
+        const amount = parseFloat(document.getElementById('depositAmountInput').value);
+
+        if (!accountId || !amount || amount <= 0) {
+            document.getElementById('depositResponseMessage').textContent = 'Please provide valid inputs.';
+            document.getElementById('depositResponseMessage').style.color = 'red';
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:8080/api/accounts/${accountId}/deposit`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ amount })
+            });
+
+            if (response.ok) {
+                document.getElementById('depositResponseMessage').textContent = 'Deposit successful.';
+                document.getElementById('depositResponseMessage').style.color = 'green';
+            } else {
+                const error = await response.text();
+                document.getElementById('depositResponseMessage').textContent = `Error: ${error}`;
+                document.getElementById('depositResponseMessage').style.color = 'red';
+            }
+        } catch (error) {
+            document.getElementById('depositResponseMessage').textContent = `Error: ${error.message}`;
+            document.getElementById('depositResponseMessage').style.color = 'red';
+        }
+    }
+
+    // Withdraw from Account
+    async function withdrawFromAccount() {
+        const accountId = document.getElementById('withdrawAccountId').value;
+        const amount = parseFloat(document.getElementById('withdrawAmountInput').value);
+
+        if (!accountId || !amount || amount <= 0) {
+            document.getElementById('withdrawResponseMessage').textContent = 'Please provide valid inputs.';
+            document.getElementById('withdrawResponseMessage').style.color = 'red';
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:8080/api/accounts/${accountId}/withdraw`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ amount })
+            });
+
+            if (response.ok) {
+                document.getElementById('withdrawResponseMessage').textContent = 'Withdrawal successful.';
+                document.getElementById('withdrawResponseMessage').style.color = 'green';
+            } else {
+                const error = await response.text();
+                document.getElementById('withdrawResponseMessage').textContent = `Error: ${error}`;
+                document.getElementById('withdrawResponseMessage').style.color = 'red';
+            }
+        } catch (error) {
+            document.getElementById('withdrawResponseMessage').textContent = `Error: ${error.message}`;
+            document.getElementById('withdrawResponseMessage').style.color = 'red';
+        }
+    }
+
+    // Check Balance
+    async function checkBalance() {
+        const accountId = document.getElementById('balanceAccountId').value;
+
+        if (!accountId) {
+            document.getElementById('balanceResponseMessage').textContent = 'Please provide a valid account ID.';
+            document.getElementById('balanceResponseMessage').style.color = 'red';
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:8080/api/accounts/${accountId}`);
+
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById('balanceResponseMessage').textContent = `Balance: $${data.balance}`;
+                document.getElementById('balanceResponseMessage').style.color = 'green';
+            } else {
+                const error = await response.text();
+                document.getElementById('balanceResponseMessage').textContent = `Error: ${error}`;
+                document.getElementById('balanceResponseMessage').style.color = 'red';
+            }
+        } catch (error) {
+            document.getElementById('balanceResponseMessage').textContent = `Error: ${error.message}`;
+            document.getElementById('balanceResponseMessage').style.color = 'red';
+        }
+    }
+
+    // Delete Account
+    async function deleteAccount() {
+        const accountId = document.getElementById('deleteAccountId').value;
+
+        if (!accountId) {
+            document.getElementById('deleteResponseMessage').textContent = 'Please provide a valid account ID.';
+            document.getElementById('deleteResponseMessage').style.color = 'red';
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:8080/api/accounts/${accountId}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                document.getElementById('deleteResponseMessage').textContent = `Account with ID ${accountId} deleted successfully.`;
+                document.getElementById('deleteResponseMessage').style.color = 'green';
+            } else {
+                const error = await response.text();
+                document.getElementById('deleteResponseMessage').textContent = `Error: ${error}`;
+                document.getElementById('deleteResponseMessage').style.color = 'red';
+            }
+        } catch (error) {
+            document.getElementById('deleteResponseMessage').textContent = `Error: ${error.message}`;
+            document.getElementById('deleteResponseMessage').style.color = 'red';
+        }
+    }
+</script>
+
+</body>
+</html>
